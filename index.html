@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radar de Tendencias Económicas - Dashboard</title>
+    <title>Radar de Tendencias Económicas - Dashboard Estratégico</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/1.30.1/index.js"></script>
     <style>
         * {
             margin: 0;
@@ -16,837 +15,658 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
             color: #333;
-        }
-
-        .dashboard-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
+            min-height: 100vh;
         }
 
         .header {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            text-align: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .header h1 {
-            color: #1976D2;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            color: white;
+            font-size: 2rem;
             font-weight: 700;
+            margin-bottom: 0.5rem;
         }
 
         .header p {
-            color: #666;
-            font-size: 1.1rem;
-            max-width: 600px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+        }
+
+        .main-container {
+            padding: 2rem;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
-        .metrics-grid {
+        .alerts-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
         }
 
-        .metric-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
+        .alert {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
         }
 
-        .metric-card:hover {
+        .alert:hover {
             transform: translateY(-5px);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
         }
 
-        .metric-card .icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            display: block;
+        .alert.critical { border-left-color: #e74c3c; }
+        .alert.high { border-left-color: #f39c12; }
+        .alert.medium { border-left-color: #f1c40f; }
+        .alert.low { border-left-color: #27ae60; }
+
+        .alert-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
         }
 
-        .metric-card .value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #1976D2;
-            margin-bottom: 5px;
+        .alert-icon {
+            font-size: 1.5rem;
         }
 
-        .metric-card .label {
+        .alert-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .critical .alert-badge { background: #e74c3c; }
+        .high .alert-badge { background: #f39c12; }
+        .medium .alert-badge { background: #f1c40f; }
+        .low .alert-badge { background: #27ae60; }
+
+        .alert-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-description {
             color: #666;
-            font-size: 0.95rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-size: 0.9rem;
+            line-height: 1.4;
         }
 
-        .charts-grid {
+        .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 30px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
-        .chart-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-trend {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .trend-up { color: #e74c3c; }
+        .trend-down { color: #27ae60; }
+        .trend-stable { color: #f39c12; }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
         .chart-title {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: 600;
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
+            margin-bottom: 1rem;
+            color: #2c3e50;
         }
 
-        .filters-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
+        .controls-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
-        .filters-grid {
+        .controls-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            align-items: end;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
-        .filter-group {
+        .control-group {
             display: flex;
             flex-direction: column;
         }
 
-        .filter-group label {
+        .control-group label {
             font-weight: 600;
-            margin-bottom: 8px;
-            color: #333;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
         }
 
-        .filter-group select, .filter-group input {
-            padding: 10px;
-            border: 2px solid #e0e0e0;
+        .control-group select, .control-group input {
+            padding: 0.75rem;
+            border: 2px solid #ecf0f1;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             transition: border-color 0.3s ease;
         }
 
-        .filter-group select:focus, .filter-group input:focus {
+        .control-group select:focus, .control-group input:focus {
             outline: none;
-            border-color: #1976D2;
+            border-color: #667eea;
         }
 
         .btn {
-            background: linear-gradient(135deg, #1976D2, #1565C0);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 0.75rem 1.5rem;
             border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
             font-weight: 600;
-            transition: all 0.3s ease;
+            cursor: pointer;
+            transition: transform 0.3s ease;
         }
 
         .btn:hover {
-            background: linear-gradient(135deg, #1565C0, #0D47A1);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(25, 118, 210, 0.3);
         }
 
-        .news-list {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        .notifications-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 350px;
+            max-height: 500px;
+            overflow-y: auto;
+            z-index: 1000;
         }
 
-        .news-item {
-            border-left: 4px solid #1976D2;
-            padding: 15px;
-            margin: 15px 0;
-            background: #f8f9fa;
-            border-radius: 0 8px 8px 0;
-            transition: transform 0.2s ease;
-        }
-
-        .news-item:hover {
-            transform: translateX(5px);
-        }
-
-        .news-item.critical {
-            border-left-color: #D32F2F;
-            background: #ffebee;
-        }
-
-        .news-item.high {
-            border-left-color: #F57C00;
-            background: #fff3e0;
-        }
-
-        .news-item.medium {
-            border-left-color: #FBC02D;
-            background: #fffde7;
-        }
-
-        .news-title {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-        }
-
-        .news-meta {
-            font-size: 0.9rem;
-            color: #666;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .relevance-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .relevance-critical {
-            background: #ffcdd2;
-            color: #c62828;
-        }
-
-        .relevance-high {
-            background: #ffe0b2;
-            color: #ef6c00;
-        }
-
-        .relevance-medium {
-            background: #fff9c4;
-            color: #f57f17;
-        }
-
-        .relevance-low {
-            background: #dcedc8;
-            color: #558b2f;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            font-size: 1.2rem;
-            color: #666;
-        }
-
-        .alert {
-            background: #e3f2fd;
-            border: 1px solid #1976d2;
+        .notification {
+            background: white;
             border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-            color: #1565c0;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease;
         }
 
-        .alert-warning {
-            background: #fff3e0;
-            border-color: #f57c00;
-            color: #ef6c00;
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
-        .alert-error {
-            background: #ffebee;
-            border-color: #d32f2f;
-            color: #c62828;
+        .notification.critical { border-left-color: #e74c3c; }
+        .notification.high { border-left-color: #f39c12; }
+        .notification.info { border-left-color: #3498db; }
+
+        .notification-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .notification-time {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+
+        .notification-message {
+            font-size: 0.8rem;
+            color: #666;
         }
 
         @media (max-width: 768px) {
-            .charts-grid {
+            .charts-container {
                 grid-template-columns: 1fr;
             }
             
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .filters-grid {
-                grid-template-columns: 1fr;
+            .notifications-panel {
+                width: 280px;
+                right: 10px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Header -->
-        <div class="header">
-            <h1>🎯 Radar de Tendencias Económicas</h1>
-            <p>Sistema de detección temprana de patrones financieros en Colombia - Dashboard Interactivo</p>
+    <div class="header">
+        <h1>🎯 Radar de Tendencias Económicas</h1>
+        <p>Sistema de Detección Temprana y Análisis Predictivo - Colombia</p>
+    </div>
+
+    <div class="main-container">
+        <!-- Alertas Estratégicas -->
+        <div class="alerts-container">
+            <div class="alert critical" onclick="showDetails('critical')">
+                <div class="alert-header">
+                    <span class="alert-icon">🚨</span>
+                    <span class="alert-badge">CRÍTICO</span>
+                </div>
+                <div class="alert-title">Pico de Inflación Detectado</div>
+                <div class="alert-description">
+                    Incremento del 15% en menciones sobre inflación en las últimas 24h. 
+                    Posible impacto en política monetaria.
+                </div>
+            </div>
+
+            <div class="alert high" onclick="showDetails('high')">
+                <div class="alert-header">
+                    <span class="alert-icon">⚠️</span>
+                    <span class="alert-badge">ALTO</span>
+                </div>
+                <div class="alert-title">Volatilidad del Dólar</div>
+                <div class="alert-description">
+                    Aumento significativo en cobertura sobre tipo de cambio. 
+                    Monitorear decisiones del Banco de la República.
+                </div>
+            </div>
+
+            <div class="alert medium" onclick="showDetails('medium')">
+                <div class="alert-header">
+                    <span class="alert-icon">📊</span>
+                    <span class="alert-badge">MEDIO</span>
+                </div>
+                <div class="alert-title">Actividad en Sector Bancario</div>
+                <div class="alert-description">
+                    Incremento en noticias sobre créditos y tasas de interés. 
+                    Posibles cambios en política crediticia.
+                </div>
+            </div>
+
+            <div class="alert low" onclick="showDetails('low')">
+                <div class="alert-header">
+                    <span class="alert-icon">📈</span>
+                    <span class="alert-badge">INFORMATIVO</span>
+                </div>
+                <div class="alert-title">Crecimiento PIB</div>
+                <div class="alert-description">
+                    Cobertura estable sobre indicadores de crecimiento económico. 
+                    Tendencia positiva mantenida.
+                </div>
+            </div>
         </div>
 
-        <!-- Métricas Principales -->
+        <!-- Métricas Clave -->
         <div class="metrics-grid">
             <div class="metric-card">
-                <span class="icon">📰</span>
-                <div class="value" id="total-news">0</div>
-                <div class="label">Total Noticias</div>
+                <div class="metric-value" id="totalNews">26570</div>
+                <div class="metric-label">Noticias Analizadas</div>
+                <div class="metric-trend trend-up">↗ +12% vs ayer</div>
             </div>
+
             <div class="metric-card">
-                <span class="icon">🔥</span>
-                <div class="value" id="relevant-news">0</div>
-                <div class="label">Noticias Relevantes</div>
+                <div class="metric-value" id="relevantNews">25719</div>
+                <div class="metric-label">Noticias Relevantes</div>
+                <div class="metric-trend trend-up">↗ +8% vs ayer</div>
             </div>
+
             <div class="metric-card">
-                <span class="icon">⚡</span>
-                <div class="value" id="critical-news">0</div>
-                <div class="label">Alertas Críticas</div>
+                <div class="metric-value" id="avgScore">1.165</div>
+                <div class="metric-label">Score Promedio</div>
+                <div class="metric-trend trend-stable">→ Estable</div>
             </div>
+
             <div class="metric-card">
-                <span class="icon">📊</span>
-                <div class="value" id="avg-score">0.0</div>
-                <div class="label">Score Promedio</div>
+                <div class="metric-value" id="alertsCount">4</div>
+                <div class="metric-label">Alertas Activas</div>
+                <div class="metric-trend trend-down">↘ -2 vs ayer</div>
             </div>
         </div>
 
-        <!-- Filtros -->
-        <div class="filters-container">
-            <h3 style="margin-bottom: 20px;">🔍 Filtros de Análisis</h3>
-            <div class="filters-grid">
-                <div class="filter-group">
-                    <label for="dateFrom">Fecha Desde:</label>
-                    <input type="date" id="dateFrom">
-                </div>
-                <div class="filter-group">
-                    <label for="dateTo">Fecha Hasta:</label>
-                    <input type="date" id="dateTo">
-                </div>
-                <div class="filter-group">
-                    <label for="relevanceFilter">Relevancia:</label>
-                    <select id="relevanceFilter">
-                        <option value="">Todas</option>
-                        <option value="CRÍTICA">Crítica</option>
-                        <option value="ALTA">Alta</option>
-                        <option value="MEDIA">Media</option>
-                        <option value="BAJA">Baja</option>
+        <!-- Controles Interactivos -->
+        <div class="controls-section">
+            <h3 class="chart-title">🔧 Controles de Análisis Dinámico</h3>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label for="timeRange">Rango Temporal:</label>
+                    <select id="timeRange" onchange="updateAnalysis()">
+                        <option value="today">Últimas 24 horas</option>
+                        <option value="week">Última semana</option>
+                        <option value="month" selected>Último mes</option>
+                        <option value="quarter">Último trimestre</option>
                     </select>
                 </div>
-                <div class="filter-group">
-                    <label for="mediaFilter">Tipo de Medio:</label>
-                    <select id="mediaFilter">
-                        <option value="">Todos</option>
-                        <option value="Digital">Digital</option>
-                        <option value="Radio">Radio</option>
-                        <option value="TV">TV</option>
+
+                <div class="control-group">
+                    <label for="mediaType">Tipo de Medio:</label>
+                    <select id="mediaType" onchange="updateAnalysis()">
+                        <option value="all" selected>Todos los medios</option>
+                        <option value="digital">Digital</option>
+                        <option value="tv">Televisión</option>
+                        <option value="radio">Radio</option>
+                        <option value="print">Prensa</option>
                     </select>
                 </div>
-                <div class="filter-group">
-                    <button class="btn" onclick="applyFilters()">Aplicar Filtros</button>
+
+                <div class="control-group">
+                    <label for="relevanceLevel">Nivel de Relevancia:</label>
+                    <select id="relevanceLevel" onchange="updateAnalysis()">
+                        <option value="all" selected>Todos los niveles</option>
+                        <option value="critical">Solo críticas</option>
+                        <option value="high">Alta y crítica</option>
+                        <option value="medium">Media y superior</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="alertThreshold">Umbral de Alerta:</label>
+                    <input type="range" id="alertThreshold" min="1" max="5" value="2" step="0.1" onchange="updateThreshold(this.value)">
+                    <span id="thresholdValue">2.0</span>
                 </div>
             </div>
+            
+            <button class="btn" onclick="exportReport()">📊 Exportar Reporte</button>
+            <button class="btn" onclick="scheduleAlert()">⏰ Programar Alerta</button>
+            <button class="btn" onclick="refreshData()" id="refreshBtn">🔄 Actualizar Datos</button>
         </div>
 
-        <!-- Gráficos -->
-        <div class="charts-grid">
-            <div class="chart-container">
+        <!-- Visualizaciones Dinámicas -->
+        <div class="charts-container">
+            <div class="chart-card">
                 <h3 class="chart-title">📈 Tendencia Temporal</h3>
-                <canvas id="timelineChart"></canvas>
+                <canvas id="trendChart" width="400" height="200"></canvas>
             </div>
-            <div class="chart-container">
+
+            <div class="chart-card">
                 <h3 class="chart-title">🎯 Distribución por Relevancia</h3>
-                <canvas id="relevanceChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3 class="chart-title">🏆 Top Palabras Económicas</h3>
-                <canvas id="keywordsChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3 class="chart-title">📺 Cobertura por Medio</h3>
-                <canvas id="mediaChart"></canvas>
+                <canvas id="relevanceChart" width="400" height="200"></canvas>
             </div>
         </div>
 
-        <!-- Lista de Noticias -->
-        <div class="news-list">
-            <h3 style="margin-bottom: 20px;">📄 Últimas Noticias Económicas</h3>
-            <div id="newsList">
-                <div class="loading">Cargando noticias...</div>
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3 class="chart-title">🏆 Palabras Económicas Clave</h3>
+                <canvas id="keywordsChart" width="400" height="200"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="chart-title">📺 Cobertura por Medio</h3>
+                <canvas id="mediaChart" width="400" height="200"></canvas>
             </div>
         </div>
     </div>
 
+    <!-- Panel de Notificaciones -->
+    <div class="notifications-panel" id="notificationsPanel">
+        <!-- Las notificaciones se generarán dinámicamente -->
+    </div>
+
     <script>
-        // Datos simulados basados en tu análisis R
+        // Datos simulados (en implementación real vendrían de tu análisis R)
         let dashboardData = {
-            totalNews: 850,
-            relevantNews: 342,
-            criticalNews: 45,
-            avgScore: 1.23,
-            timelineData: [
-                { date: '2024-01-01', count: 12, avgScore: 1.2 },
-                { date: '2024-01-02', count: 8, avgScore: 0.9 },
-                { date: '2024-01-03', count: 15, avgScore: 1.8 },
-                { date: '2024-01-04', count: 6, avgScore: 0.7 },
-                { date: '2024-01-05', count: 11, avgScore: 1.4 },
-                { date: '2024-01-06', count: 9, avgScore: 1.1 },
-                { date: '2024-01-07', count: 14, avgScore: 1.6 }
-            ],
-            relevanceDistribution: {
-                'CRÍTICA': 45,
-                'ALTA': 87,
-                'MEDIA': 134,
-                'BAJA': 76,
-                'NULA': 508
+            trends: {
+                labels: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+                datasets: [{
+                    label: 'Noticias Pronosticadas',
+                    data: [108.9, 108.0, 109.5, 111.8, 113.4, 113.6, 112.9],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
             },
-            topKeywords: [
-                { word: 'dólar', count: 89, percentage: 18.2 },
-                { word: 'inflación', count: 67, percentage: 13.7 },
-                { word: 'tasas de interés', count: 54, percentage: 11.0 },
-                { word: 'banco', count: 43, percentage: 8.8 },
-                { word: 'PIB', count: 38, percentage: 7.8 },
-                { word: 'inversión', count: 29, percentage: 5.9 }
-            ],
-            mediaDistribution: {
-                'Digital': 187,
-                'Radio': 89,
-                'TV': 66
+            relevance: {
+                labels: ['Crítica', 'Alta', 'Media', 'Baja', 'Nula'],
+                datasets: [{
+                    data: [3893, 5238, 7987, 8601, 851],
+                    backgroundColor: ['#e74c3c', '#f39c12', '#f1c40f', '#27ae60', '#bdc3c7']
+                }]
             },
-            recentNews: [
-                {
-                    title: 'Banco de la República evalúa nueva subida de tasas de interés',
-                    date: '2024-01-05',
-                    media: 'El Tiempo',
-                    type: 'Digital',
-                    relevance: 'CRÍTICA',
-                    score: 2.8,
-                    keywords: ['banco', 'tasas de interés']
-                },
-                {
-                    title: 'Inflación en Colombia supera expectativas del mercado',
-                    date: '2024-01-05',
-                    media: 'RCN Radio',
-                    type: 'Radio',
-                    relevance: 'ALTA',
-                    score: 2.1,
-                    keywords: ['inflación']
-                },
-                {
-                    title: 'Dólar se mantiene volátil ante decisiones del gobierno',
-                    date: '2024-01-04',
-                    media: 'Caracol TV',
-                    type: 'TV',
-                    relevance: 'ALTA',
-                    score: 1.9,
-                    keywords: ['dólar']
-                },
-                {
-                    title: 'Exportaciones muestran recuperación gradual',
-                    date: '2024-01-04',
-                    media: 'Portafolio',
-                    type: 'Digital',
-                    relevance: 'MEDIA',
-                    score: 1.4,
-                    keywords: ['exportaciones']
-                },
-                {
-                    title: 'FMI ajusta proyecciones de crecimiento para Colombia',
-                    date: '2024-01-03',
-                    media: 'Bloomberg',
-                    type: 'Digital',
-                    relevance: 'ALTA',
-                    score: 2.0,
-                    keywords: ['FMI', 'PIB']
-                }
-            ]
+            keywords: {
+                labels: ['Inflación', 'Dólar', 'Bancos', 'PIB', 'Tasas', 'Crédito'],
+                datasets: [{
+                    label: 'Menciones',
+                    data: [45, 38, 32, 28, 25, 22],
+                    backgroundColor: '#667eea'
+                }]
+            },
+            media: {
+                labels: ['Digital', 'TV', 'Radio', 'Prensa'],
+                datasets: [{
+                    data: [45, 30, 15, 10],
+                    backgroundColor: ['#3498db', '#e74c3c', '#f39c12', '#27ae60']
+                }]
+            }
         };
 
-        let charts = {};
-
-        // Inicializar dashboard
-        function initDashboard() {
-            updateMetrics();
-            createCharts();
-            displayNews();
-            setupDateFilters();
-        }
-
-        // Actualizar métricas principales
-        function updateMetrics() {
-            document.getElementById('total-news').textContent = dashboardData.totalNews.toLocaleString();
-            document.getElementById('relevant-news').textContent = dashboardData.relevantNews.toLocaleString();
-            document.getElementById('critical-news').textContent = dashboardData.criticalNews.toLocaleString();
-            document.getElementById('avg-score').textContent = dashboardData.avgScore.toFixed(2);
-        }
-
-        // Crear gráficos
-        function createCharts() {
-            createTimelineChart();
-            createRelevanceChart();
-            createKeywordsChart();
-            createMediaChart();
-        }
-
-        // Gráfico de tendencia temporal
-        function createTimelineChart() {
-            const ctx = document.getElementById('timelineChart').getContext('2d');
-            const labels = dashboardData.timelineData.map(d => d.date);
-            const counts = dashboardData.timelineData.map(d => d.count);
-            const scores = dashboardData.timelineData.map(d => d.avgScore);
-
-            charts.timeline = new Chart(ctx, {
+        // Inicializar gráficos
+        function initCharts() {
+            // Gráfico de tendencias
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            new Chart(trendCtx, {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Número de Noticias',
-                        data: counts,
-                        borderColor: '#1976D2',
-                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        yAxisID: 'y'
-                    }, {
-                        label: 'Score Promedio',
-                        data: scores,
-                        borderColor: '#D32F2F',
-                        backgroundColor: 'rgba(211, 47, 47, 0.1)',
-                        fill: false,
-                        tension: 0.4,
-                        yAxisID: 'y1'
-                    }]
-                },
+                data: dashboardData.trends,
                 options: {
                     responsive: true,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
+                    plugins: {
+                        legend: { display: false }
                     },
                     scales: {
-                        x: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Fecha'
-                            }
-                        },
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            title: {
-                                display: true,
-                                text: 'Número de Noticias'
-                            }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: 'Score Promedio'
-                            },
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                        }
+                        y: { beginAtZero: true }
                     }
                 }
             });
-        }
 
-        // Gráfico de distribución por relevancia
-        function createRelevanceChart() {
-            const ctx = document.getElementById('relevanceChart').getContext('2d');
-            const labels = Object.keys(dashboardData.relevanceDistribution);
-            const data = Object.values(dashboardData.relevanceDistribution);
-            const colors = {
-                'CRÍTICA': '#D32F2F',
-                'ALTA': '#F57C00',
-                'MEDIA': '#FBC02D',
-                'BAJA': '#689F38',
-                'NULA': '#BDBDBD'
-            };
-
-            charts.relevance = new Chart(ctx, {
+            // Gráfico de relevancia
+            const relevanceCtx = document.getElementById('relevanceChart').getContext('2d');
+            new Chart(relevanceCtx, {
                 type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: labels.map(label => colors[label]),
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
+                data: dashboardData.relevance,
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((context.parsed * 100) / total).toFixed(1);
-                                    return `${context.label}: ${context.parsed} (${percentage}%)`;
-                                }
-                            }
-                        }
+                        legend: { position: 'bottom' }
                     }
                 }
             });
-        }
 
-        // Gráfico de palabras clave
-        function createKeywordsChart() {
-            const ctx = document.getElementById('keywordsChart').getContext('2d');
-            const labels = dashboardData.topKeywords.map(k => k.word);
-            const data = dashboardData.topKeywords.map(k => k.count);
-
-            charts.keywords = new Chart(ctx, {
+            // Gráfico de palabras clave
+            const keywordsCtx = document.getElementById('keywordsChart').getContext('2d');
+            new Chart(keywordsCtx, {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Menciones',
-                        data: data,
-                        backgroundColor: 'rgba(25, 118, 210, 0.8)',
-                        borderColor: '#1976D2',
-                        borderWidth: 1
-                    }]
-                },
+                data: dashboardData.keywords,
                 options: {
-                    indexAxis: 'y',
                     responsive: true,
                     plugins: {
-                        legend: {
-                            display: false
-                        }
+                        legend: { display: false }
                     },
                     scales: {
-                        x: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Número de Menciones'
-                            }
-                        }
+                        y: { beginAtZero: true }
                     }
                 }
             });
-        }
 
-        // Gráfico de medios
-        function createMediaChart() {
-            const ctx = document.getElementById('mediaChart').getContext('2d');
-            const labels = Object.keys(dashboardData.mediaDistribution);
-            const data = Object.values(dashboardData.mediaDistribution);
-
-            charts.media = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Noticias',
-                        data: data,
-                        backgroundColor: ['#4CAF50', '#FF9800', '#9C27B0'],
-                        borderColor: ['#388E3C', '#F57C00', '#7B1FA2'],
-                        borderWidth: 2
-                    }]
-                },
+            // Gráfico de medios
+            const mediaCtx = document.getElementById('mediaChart').getContext('2d');
+            new Chart(mediaCtx, {
+                type: 'pie',
+                data: dashboardData.media,
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Número de Noticias'
-                            }
-                        }
+                        legend: { position: 'bottom' }
                     }
                 }
             });
         }
 
-        // Mostrar noticias
-        function displayNews(filteredNews = null) {
-            const newsContainer = document.getElementById('newsList');
-            const newsToShow = filteredNews || dashboardData.recentNews;
-            
-            if (newsToShow.length === 0) {
-                newsContainer.innerHTML = '<div class="alert alert-warning">No se encontraron noticias con los filtros aplicados.</div>';
-                return;
-            }
-
-            const newsHTML = newsToShow.map(news => {
-                const relevanceClass = news.relevance.toLowerCase();
-                const badgeClass = `relevance-${relevanceClass}`;
-                
-                return `
-                    <div class="news-item ${relevanceClass}">
-                        <div class="news-title">${news.title}</div>
-                        <div class="news-meta">
-                            <span>📅 ${news.date}</span>
-                            <span>📺 ${news.media} (${news.type})</span>
-                            <span class="relevance-badge ${badgeClass}">${news.relevance}</span>
-                            <span>⭐ Score: ${news.score.toFixed(2)}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            newsContainer.innerHTML = newsHTML;
-        }
-
-        // Configurar filtros de fecha
-        function setupDateFilters() {
-            const today = new Date();
-            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-            
-            document.getElementById('dateFrom').value = weekAgo.toISOString().split('T')[0];
-            document.getElementById('dateTo').value = today.toISOString().split('T')[0];
-        }
-
-        // Aplicar filtros
-        function applyFilters() {
-            const dateFrom = document.getElementById('dateFrom').value;
-            const dateTo = document.getElementById('dateTo').value;
-            const relevanceFilter = document.getElementById('relevanceFilter').value;
-            const mediaFilter = document.getElementById('mediaFilter').value;
-
-            let filteredNews = dashboardData.recentNews;
-
-            if (dateFrom) {
-                filteredNews = filteredNews.filter(news => news.date >= dateFrom);
-            }
-
-            if (dateTo) {
-                filteredNews = filteredNews.filter(news => news.date <= dateTo);
-            }
-
-            if (relevanceFilter) {
-                filteredNews = filteredNews.filter(news => news.relevance === relevanceFilter);
-            }
-
-            if (mediaFilter) {
-                filteredNews = filteredNews.filter(news => news.type === mediaFilter);
-            }
-
-            displayNews(filteredNews);
-
-            // Mostrar notificación
-            showNotification(`Filtros aplicados: ${filteredNews.length} noticias encontradas`);
-        }
-
-        // Mostrar notificación
-        function showNotification(message, type = 'info') {
+        // Sistema de notificaciones
+        function showNotification(type, title, message) {
             const notification = document.createElement('div');
-            notification.className = `alert alert-${type}`;
-            notification.textContent = message;
-            notification.style.position = 'fixed';
-            notification.style.top = '20px';
-            notification.style.right = '20px';
-            notification.style.zIndex = '1000';
-            notification.style.maxWidth = '300px';
-            
-            document.body.appendChild(notification);
-            
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <div class="notification-title">${title}</div>
+                    <div class="notification-time">${new Date().toLocaleTimeString()}</div>
+                </div>
+                <div class="notification-message">${message}</div>
+            `;
+
+            document.getElementById('notificationsPanel').appendChild(notification);
+
+            // Auto-eliminar después de 10 segundos
             setTimeout(() => {
                 notification.remove();
+            }, 10000);
+        }
+
+        // Funciones de interactividad
+        function updateAnalysis() {
+            const timeRange = document.getElementById('timeRange').value;
+            const mediaType = document.getElementById('mediaType').value;
+            const relevanceLevel = document.getElementById('relevanceLevel').value;
+
+            showNotification('info', 'Filtros Actualizados', 
+                `Análisis actualizado: ${timeRange}, ${mediaType}, ${relevanceLevel}`);
+            
+            // Aquí conectarías con tu análisis R
+            updateMetrics();
+        }
+
+        function updateThreshold(value) {
+            document.getElementById('thresholdValue').textContent = parseFloat(value).toFixed(1);
+            showNotification('info', 'Umbral Actualizado', 
+                `Nuevo umbral de alerta: ${parseFloat(value).toFixed(1)}`);
+        }
+
+        function updateMetrics() {
+            // Simular actualización de métricas (conectar con R)
+            const metrics = ['totalNews', 'relevantNews', 'avgScore', 'alertsCount'];
+            metrics.forEach(metric => {
+                const element = document.getElementById(metric);
+                const currentValue = parseInt(element.textContent);
+                const newValue = currentValue + Math.floor(Math.random() * 10) - 5;
+                element.textContent = Math.max(0, newValue);
+            });
+        }
+
+        function refreshData() {
+            const btn = document.getElementById('refreshBtn');
+            btn.innerHTML = '🔄 Actualizando...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                updateMetrics();
+                showNotification('info', 'Datos Actualizados', 
+                    'Los datos se han actualizado correctamente');
+                btn.innerHTML = '🔄 Actualizar Datos';
+                btn.disabled = false;
+            }, 2000);
+        }
+
+        function showDetails(level) {
+            const messages = {
+                critical: 'Análisis detallado de la situación crítica detectada. Se recomienda monitoreo continuo.',
+                high: 'Situación de alta prioridad que requiere atención en las próximas horas.',
+                medium: 'Tendencia que debe ser monitoreada en los próximos días.',
+                low: 'Información relevante para seguimiento estratégico.'
+            };
+
+            showNotification(level === 'low' ? 'info' : level, 
+                `Detalles - ${level.toUpperCase()}`, messages[level]);
+        }
+
+        function exportReport() {
+            showNotification('info', 'Exportando Reporte', 
+                'Generando reporte PDF con análisis completo...');
+            
+            // Aquí implementarías la exportación real
+            setTimeout(() => {
+                showNotification('info', 'Reporte Listo', 
+                    'El reporte ha sido generado y está listo para descarga');
             }, 3000);
         }
 
-        // Función para cargar datos desde archivo Excel (simulada)
-        function loadDataFromExcel() {
-            // Esta es una simulación - en un entorno real podrías usar:
-            // - Una API que procese el archivo Excel
-            // - Conversión del Excel a JSON
-            // - Integración con un backend que ejecute el código R
-            
-            showNotification('Datos actualizados desde el análisis R', 'info');
-            updateMetrics();
-            
-            // Actualizar gráficos
-            Object.values(charts).forEach(chart => {
-                chart.update();
-            });
+        function scheduleAlert() {
+            showNotification('info', 'Alerta Programada', 
+                'Se han configurado alertas automáticas cada 4 horas');
         }
 
-        // Función para exportar reporte
-        function exportReport() {
-            const reportData = {
-                timestamp: new Date().toISOString(),
-                metrics: {
-                    totalNews: dashboardData.totalNews,
-                    relevantNews: dashboardData.relevantNews,
-                    criticalNews: dashboardData.criticalNews,
-                    avgScore: dashboardData.avgScore
-                },
-                topKeywords: dashboardData.topKeywords,
-                recentAlerts: dashboardData.recentNews.filter(n => n.relevance === 'CRÍTICA')
-            };
-
-            const dataStr = JSON.stringify(reportData, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = `reporte-tendencias-economicas-${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            
-            showNotification('Reporte exportado exitosamente', 'info');
-        }
-
-        // Inicializar dashboard al cargar la página
-        document.addEventListener('DOMContentLoaded', function() {
-            initDashboard();
-            
-            // Configurar actualización automática cada 5 minutos
+        // Simular alertas automáticas
+        function startAutoAlerts() {
             setInterval(() => {
-                loadDataFromExcel();
-            }, 5 * 60 * 1000);
-        });
+                const alerts = [
+                    { type: 'critical', title: 'Nueva Tendencia Crítica', message: 'Detección automática de patrón económico crítico' },
+                    { type: 'high', title: 'Cambio Significativo', message: 'Variación importante en indicadores clave' },
+                    { type: 'info', title: 'Actualización Programada', message: 'Datos actualizados automáticamente' }
+                ];
 
-        // Agregar botones de acción
+                const randomAlert = alerts[Math.floor(Math.random() * alerts.length)];
+                showNotification(randomAlert.type, randomAlert.title, randomAlert.message);
+            }, 30000); // Cada 30 segundos para demo
+        }
+
+        // Inicializar dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            const header = document.querySelector('.header');
-            const actionButtons = document.createElement('div');
-            actionButtons.style.marginTop = '20px';
-            actionButtons.innerHTML = `
-                <button class="btn" onclick="loadDataFromExcel()" style="margin-right: 10px;">
-                    🔄 Actualizar Datos
-                </button>
-                <button class="btn" onclick="exportReport()">
-                    📊 Exportar Reporte
-                </button>
-            `;
-            header.appendChild(actionButtons);
+            initCharts();
+            startAutoAlerts();
+            
+            // Mostrar notificación de bienvenida
+            setTimeout(() => {
+                showNotification('info', 'Dashboard Iniciado', 
+                    'Sistema de análisis económico activo y monitoreando');
+            }, 1000);
         });
     </script>
 </body>
